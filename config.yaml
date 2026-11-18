@@ -1,0 +1,11 @@
+download:
+  repo: michaelwitting/RepoRT
+  ref: master          # replace with a commit SHA once downloaded, for reproducibility
+paths: {raw: data/raw, processed: data/processed, reports: reports}
+methods:
+  "0434": {column: HSS_T3,    buffer: formate, pH: 3.0, t0: 1.1025}
+  "0435": {column: HSS_T3,    buffer: acetate, pH: 8.0, t0: 1.1025}   # pH not in metadata; from study text
+  "0433": {column: AscExpC18, buffer: formate, pH: 3.0, t0: 0.735}
+expected: {flow: 0.3, temp: 40, run_time: 25, hold_end: 1, ramp_end: 20, phi0: 0.05, phi1: 0.95}
+data: {c_void: 1.5, c_void_alt: 2.0, big_shift_min: 5.0}
+
