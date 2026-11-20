@@ -1,11 +1,16 @@
-download:
-  repo: michaelwitting/RepoRT
-  ref: master          # replace with a commit SHA once downloaded, for reproducibility
-paths: {raw: data/raw, processed: data/processed, reports: reports}
-methods:
-  "0434": {column: HSS_T3,    buffer: formate, pH: 3.0, t0: 1.1025}
-  "0435": {column: HSS_T3,    buffer: acetate, pH: 8.0, t0: 1.1025}   # pH not in metadata; from study text
-  "0433": {column: AscExpC18, buffer: formate, pH: 3.0, t0: 0.735}
-expected: {flow: 0.3, temp: 40, run_time: 25, hold_end: 1, ramp_end: 20, phi0: 0.05, phi1: 0.95}
-data: {c_void: 1.5, c_void_alt: 2.0, big_shift_min: 5.0}
-
+data:
+  url: https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/Lipophilicity.csv #https://github.com/deepchem/deepchem/blob/master/deepchem/molnet/load_function/lipo_datasets.py
+  md5: 85a0e1cb8b38b0dfc3f96ff47a57f0ab     #fingerprint of the file's contents # If it doesn't match, the script only warns: the file might just have been re-exported
+  smiles_col: smiles
+  raw_file: data/raw/Lipophilicity.csv
+  target_col: exp
+  id_col: CMPD_CHEMBLID
+  merge_stereo: true          # stereoisomers look identical to the features → merge
+features:
+  morgan_radius: 2
+  morgan_bits: 1024
+  desc_abs_max: 1.0e6         # larger |value| → NaN (exploding descriptors)
+paths:
+  raw: data/raw
+  processed: data/processed
+  reports: reports

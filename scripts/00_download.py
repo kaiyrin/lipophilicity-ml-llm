@@ -1,45 +1,21 @@
-"""Download the RepoRT files for the configured methods into data/raw/."""
-import argparse, csv, datetime, hashlib, sys, urllib.request
+"""Download the raw Lipophilicity CSV file."""
+import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from qsrr.config import load_config
+ROOT = Path(__file__).resolve().parents[1]   # retention_project/
+sys.path.insert(0, str(ROOT))
+import hashlib, urllib.request
+from src.config import load_config
 
-PER_METHOD = ["{m}_rtdata_canonical_success.tsv", "{m}_metadata.tsv", "{m}_gradient.tsv"]
-SHARED = {"processed_data/studies.tsv": "studies.tsv",
-          "resources/hsm_database/hsm_database.tsv": "hsm_database.tsv"}
+cfg = load_config()["data"]
+dest = cfg["raw_file"]
+dest.parent.mkdir(parents=True, exist_ok=True)
 
-def fetch(url, dest, force):
-    if dest.exists() and not force:
-        print(f"skip  {dest} (exists)"); return dest.read_bytes()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    with urllib.request.urlopen(url, timeout=60) as r:
-        data = r.read()
-    if data.lstrip()[:1] == b"<":                       # got an HTML error page, not a TSV
-        raise RuntimeError(f"not a TSV: {url}")
-    dest.write_bytes(data)
-    print(f"ok    {dest} ({len(data):,} bytes)")
-    return data
+if dest.exists():
+    print(f"Already downloaded: {dest}")
+else:
+    print(f"Downloading {cfg['url']}")
+    urllib.request.urlretrieve(cfg["url"], dest)
 
-def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--force", action="store_true")
-    args = ap.parse_args()
-    cfg = load_config()
-    base = f"https://raw.githubusercontent.com/{cfg['download']['repo']}/{cfg['download']['ref']}"
-    raw = cfg["paths"]["raw"]
-    jobs = [(f"{base}/processed_data/{m}/{f.format(m=m)}", raw / m / f.format(m=m))
-            for m in cfg["methods"] for f in PER_METHOD]
-    jobs += [(f"{base}/{src}", raw / dst) for src, dst in SHARED.items()]
-
-    rows = []
-    for url, dest in jobs:
-        data = fetch(url, dest, args.force)
-        rows.append({"file": str(dest.relative_to(raw)), "url": url, "bytes": len(data),
-                     "sha256": hashlib.sha256(data).hexdigest(),
-                     "downloaded": datetime.date.today().isoformat()})
-    with open(raw / "MANIFEST.csv", "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=rows[0]); w.writeheader(); w.writerows(rows)
-    print(f"\n{len(rows)} files, manifest at {raw / 'MANIFEST.csv'}")
-
-if __name__ == "__main__":
-    main()
-    
+md5 = hashlib.md5(dest.read_bytes()).hexdigest()
+status = "OK" if md5 == cfg["md5"] else "MISMATCH (file differs from the published checksum; check before use)"
+print(f"Size: {dest.stat().st_size / 1e3:.0f} kB   md5: {md5}   {status}")
