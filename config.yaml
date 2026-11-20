@@ -14,3 +14,22 @@ paths:
   raw: data/raw
   processed: data/processed
   reports: reports
+#split+base+models+cv
+cv:
+  splits: [scaffold]   # scaffold = unseen chemistry
+  n_splits: 5
+  seeds: [0, 1, 2]             # runtime knob: use [0] for a quick first pass
+
+models:
+  ridge_alphas: [-2, 3, 12]    # np.logspace(-2, 3, 12) → RidgeCV picks the best
+  knn_k: 5
+  hgb: {max_iter: 400, learning_rate: 0.05, max_leaf_nodes: 15, min_samples_leaf: 10, l2_regularization: 1.0}
+  mlp: {hidden: [256, 128], dropout: 0.2, lr: 0.001, weight_decay: 0.0001, epochs: 150, patience: 15, batch_size: 64}
+  mlp_losses: [huber]
+
+#OLD: bootstrap: {n_boot: 2000}
+bootstrap:
+  n_boot: 2000        # resampling rounds
+  ci: 0.95            # 95% CI → 2.5th and 97.5th percentiles
+  unit: scaffold      # scaffold = resample whole families (stricter); molecule = resample rows
+  seed: 0             # bootstrap RNG seed, separate from cv.seeds
