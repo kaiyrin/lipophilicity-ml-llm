@@ -1,10 +1,10 @@
 # Predicting lipophilicity (logD) from molecular structure
 
-This primarily a machine-learning project on a chemistry dataset. A model reads a molecule's structure and predicts how lipophilic it is (its **logD**), is tested on **new chemical families** it has never seen, says **"I don't know"** when a molecule looks too unlike its training data, and has a **light explainability (XAI) summary** (`permutation_importance`, `PartialDependenceDisplay`) that an LLM puts into plain English.
+This primarily a machine-learning project on a chemistry dataset. A model reads a molecule's structure and predicts the lipophilicity ( at**logD at pH 7.4**) from its structure. The main questions are how well they do on **chemical families they have never seen**, how error changes for molecules **unlike the training data**, and **which features** the best model relies on (by`permutation_importance`, `PartialDependenceDisplay`). Then an LLM then puts the analysis results into plain English.
 
 I am an ML student, not a chemist. The README therefore also explains the chemistry vocabulary and tools (SMILES, ChEMBL, RDKit, fingerprints, scaffolds) as I understood them while building this.
 
-**Attention!** This is not ful XAI, here there is No SHAP, LIME or counterfactuals; nothing says why *this* molecule got *this* value. It is my first attempt for **global, light** explanation of individual predictions and highlighting Permutation importance by how much a column is used, not whether higher values raise or lower logD.
+**Attention!** This is not ful XAI,  there is No SHAP, LIME or counterfactuals; nothing says why *this* molecule got *this* value. It is my first attempt for **global, light** explanation of individual predictions and highlighting Permutation importance by how much a column is used, not whether higher values raise or lower logD.
 
 ---
 ## 1. The problem in plain terms
@@ -14,7 +14,7 @@ I am an ML student, not a chemist. The README therefore also explains the chemis
 | **logD** (my target, `y`) | A measured number for how a compound distributes between an oily solvent (octanol) and water at a given acidity (pH 7.4 in this dataset). Higher = more oil-loving. Drug chemists care because it influences how a compound is absorbed and behaves in the body. |
 | **Input `X`**             | A molecule, written as text (a SMILES string), turned into numbers (descriptors + fingerprint bits).                                                                                                                                                             |
 | **Task**                  | Regression: SMILES → logD.                                                                                                                                                                                                                                       |
-| **Why scaffold splits**   | In drug discovery the next project explores *new* chemistry. A random split puts close relatives of a test molecule into training and flatters the model. Splitting by chemical family (scaffold) measures what we actually want.                                |
+| **Why scaffold splits**   | A molecule's core ring system with the side groups removed. Molecules that share a scaffold form a chemical "family".                              |
 
 %%Dataset: the *Lipophilicity* set from MoleculeNet / DeepChem, about 4,200 compounds measured by AstraZeneca and deposited in ChEMBL. Raw columns: `CMPD_CHEMBLID` (ID), `smiles` (input), `exp` (label, renamed `logd`).%%
 
@@ -22,11 +22,17 @@ I am an ML student, not a chemist. The README therefore also explains the chemis
 
 All numbers are RMSE in logD units, mean over 3 seeds × 5 folds, on the **scaffold split** unless stated.
 
-* **No-chemistry floor:** predicting the mean gives **1.201**, which is the SD of logD.
-* **Best model: `HGB_both`** (gradient-boosted trees on descriptors + fingerprint) scores **0.685** on new families, versus **0.624** on a random split. New families cost about **+0.06 RMSE** for every model, so the penalty is real but modest.
-* **Trees beat linear and nearest-neighbour** by clear margins (95% CIs exclude 0). A neural net (`MLP_both`) is **statistically tied** with the trees.
-* **"I don't know" works.** Refusing molecules whose nearest training neighbour has similarity below 0.5 keeps 61% of molecules at RMSE **0.580**; the refused 39% have RMSE **0.824** (all molecules together: 0.685).
-* **Light explainability:** two descriptor columns hold about 73% of the model's total permutation importance; collapsing near-copy columns barely changes that.
+- **Starting point:** predicting the mean gives **1.201**, which is the SD of logD.
+- **Best model: `HGB_both`** (gradient-boosted trees on descriptors + fingerprint) scores **0.685** on new families, versus **0.624** on a random split. New families cost about **+0.06 RMSE** for every model, so the penalty is very modest.
+- **Trees beat linear and nearest-neighbour** by clear margins (95% CIs exclude 0). A neural net (`MLP_both`) is **statistically tied** with the trees.
+- **Predictions are less reliable for unfamiliar molecules.** For each test molecule I measured its
+  similarity (0–1) to the closest molecule in the training set. If we only kept molecules with
+  similarity ≥ 0.5 (61% of them), their RMSE would be **0.58**; the other 39% have RMSE **0.82** (all together: 0.685). The model does not refuse predictions itself. This shows where a similarity cut-off *could* be set.
+- **Light explainability:** Two input columns account for about 73% of
+  the model's total permutation importance (how much the error rises when that column is shuffled):
+  - `MolLogP`, a computed estimate of oil-loving-ness from the atoms (a formula-based cousin of the target);
+  - `fr_COO`, the number of carboxylic-acid groups. These are usually charged at pH 7.4, and charged molecules prefer water, so more of them means lower logD.
+
 
 ## 3. Quick start
 ### 3.1 Environment
@@ -52,56 +58,42 @@ pip install -r requirements_pip.txt python-dotenv google-genai
 
 %%Pinned in `requirements.txt` (key ones): `rdkit==2026.9.1`, `scikit-learn==1.9.1`, `pandas==3.1.1`, `numpy==2.5.5`, `scipy==1.18.1`, `pyarrow==26.0.1` (parquet files), `PyYAML==6.0.3`.%%
 
-### 3.2 The `.env` file (only for the LLM step)
+### 3.2 The `.env` file (only needed for the LLM summary)
 
-Write your own .env file with your api key for llm part.
+The last step can ask Google's Gemini model to turn the results into a short plain-English summary. For that it needs an API key, which you keep in a file called `.env` in the project root (next to`README.md`).
+1. Get a free key at [Google AI Studio](https://aistudio.google.com/apikey).
+2. Create `.env` with:
 
-```ini
-
-GEMINI_API_KEY=your-key-from-Google-AI-Studio
-
-GEMINI_MODEL=gemini-3.5-flash-lite # optional; this is the default in the script
-
-```
-
+   ```ini
+   GEMINI_API_KEY=your-key-here
+   GEMINI_MODEL=gemini-2.5-flash-lite   # optional; this is the script's default
+   ```
+   
 %%Without a key everything still runs: step 05 writes `xai_facts.json`, skips the LLM, and prints the instruction text so you can paste it plus the JSON into any chat.%%
 
 ### 3.3 Run
 
 ```bash
-
 python scripts/run_all.py # runs only the steps whose output is missing
-
-python scripts/run_all.py --force 03_cv_ladder # rerun one step
-
+python scripts/run_all.py --force 02_cv_ladder # rerun one step
 python scripts/run_all.py --force all # rerun everything
-
 ```
 ## 4. Repository layout
 
 ```
-
 .
-
 ├── config.yaml # every setting in one place
-
 ├── .env # API key (not committed)
-
 ├── requirements.txt
-
 ├── data/
-
 │ ├── raw/Lipophilicity.csv
-
 │ └── processed/ # molecules.parquet, features.parquet, oof.parquet
-
 ├── reports/ # permutation_importance*.csv, descriptor_clusters.csv, xai_facts.json, xai_summary.txt
-
 ├── scripts/ # numbered steps + run_all.py
-
 └── src/ # config, data, features, scaffold, models, validate
 
 ```
+
 
 ## 5. Pipeline, step by step
 
