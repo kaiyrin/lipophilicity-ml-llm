@@ -15,9 +15,9 @@ RAW, PROC, REP = cfg["paths"]["raw"], cfg["paths"]["processed"], cfg["paths"]["r
 STEPS = [
     ("00_download.py",         RAW / "Lipophilicity.csv"),
     ("01_build_data.py",       PROC / "features.parquet"),
-    ("03_cv_ladder.py",        PROC / "oof.parquet"),                  
-    ("04_analysis_interp.py",  REP / "permutation_importance.csv"),  
-    ("05_llm_summary.py",       REP / "xai_facts.json")  
+    ("02_cv_ladder.py",        PROC / "oof.parquet"),                  
+    ("03_analysis_interp.py",  REP / "permutation_importance.csv"),  
+    ("04_llm_summary.py",       REP / "xai_facts.json")  
 ]
 
 ap = argparse.ArgumentParser()
