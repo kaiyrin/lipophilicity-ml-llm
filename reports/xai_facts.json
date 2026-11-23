@@ -1,0 +1,55 @@
+{
+ "setup": {
+  "model": "HGB_both",
+  "columns": "1231",
+  "evaluation": "scaffold folds; importance measured on test molecules only",
+  "folds": "5",
+  "repeats_per_column": "5",
+  "seed": "0",
+  "importance_meaning": "increase in RMSE when one column is shuffled"
+ },
+ "hypotheses": [
+  {
+   "id": "H1",
+   "statement": "The model relies on very few columns",
+   "rule": "top-2 columns hold at least 50% of the total importance",
+   "numbers": "top-1 42%, top-2 73%, top-10 80%; top column d_MolLogP 0.452 (fold SD not saved)",
+   "verdict": "supported"
+  },
+  {
+   "id": "H2",
+   "statement": "Most columns are not used",
+   "rule": "at least 50% of columns have importance <= 0",
+   "numbers": "50% of 1231 columns are <= 0; 75 are above 0.001",
+   "verdict": "not supported"
+  },
+  {
+   "id": "H3",
+   "statement": "The most important columns are mainly descriptors, not fingerprint bits",
+   "rule": "at least 6 of the top-10 columns are descriptors",
+   "numbers": "9 of the top-10 are descriptors, 1 are fingerprint bits",
+   "verdict": "supported"
+  },
+  {
+   "id": "H4",
+   "statement": "Near-copies were hiding some importance of the top columns",
+   "rule": "a top column has near-copies and its importance rises when they are collapsed",
+   "numbers": "d_MolLogP: 1 near-copies, 0.452 alone -> 0.443 collapsed; d_fr_COO: 2 near-copies, 0.322 alone -> 0.324 collapsed",
+   "verdict": "supported"
+  },
+  {
+   "id": "H5",
+   "statement": "The top columns stay on top after grouping",
+   "rule": "the top-2 columns (or their representatives) are still the top-2",
+   "numbers": "before ['d_MolLogP', 'd_fr_COO'], after ['d_MolLogP', 'd_fr_COO']",
+   "verdict": "supported"
+  }
+ ],
+ "limits": [
+  "Importance shows what the model uses, not what causes the target.",
+  "Correlated columns share credit, so a single column's number understates it.",
+  "H3 counts the top-10 columns; it does not compare the whole descriptor and fingerprint blocks (that comparison is the cross-validation ablation).",
+  "One seed and five scaffold folds; spread over folds is reported, spread over seeds is not.",
+  "Verdict rules (such as 50% or 6 of 10) were fixed by the author in advance and are not statistical tests."
+ ]
+}

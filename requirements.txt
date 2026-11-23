@@ -45,7 +45,7 @@ pytest==9.2.0
 python-dateutil==4.0.0
 PyYAML==6.0.3
 pyzmq==27.3.0
-rdkit==2026.9.1
+rdkit==2026.9.1 #mandatory for chemoinformatics, install via conda: conda install -c conda-forge rdkit
 scikit-learn==1.9.1
 scipy==1.18.1
 setuptools==84.2.1

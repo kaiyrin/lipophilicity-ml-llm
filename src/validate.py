@@ -15,8 +15,7 @@ def metrics(y, p):
 
 
 def rmse_diff_ci(err_a, err_b, clusters, n_boot=2000, seed=0): #err_a/err_b = pred_(a/b) - y (out-of-fold), clusters = scaffold groups
-    """RMSE(a) − RMSE(b) with a 95% CI. Resamples whole clusters (scaffolds), because
-    molecules in one family are not independent."""
+    """RMSE(a) − RMSE(b) with a 95% CI. Resamples whole clusters (scaffolds)"""
     df = pd.DataFrame({"a": np.asarray(err_a) ** 2, "b": np.asarray(err_b) ** 2, "c": np.asarray(clusters)}) #square the errors to get squared errors for RMSE
     per = df.groupby("c").agg(a=("a", "sum"), b=("b", "sum"), n=("a", "size")) # a, b - sum of squared errors per family, n - number of molecules per family
     # bootstrap resample the families, compute RMSE(a) - RMSE(b) for each resample, and get the 2.5% and 97.5% percentiles for the CI

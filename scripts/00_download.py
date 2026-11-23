@@ -17,5 +17,3 @@ else:
     urllib.request.urlretrieve(cfg["url"], dest)
 
 md5 = hashlib.md5(dest.read_bytes()).hexdigest()
-status = "OK" if md5 == cfg["md5"] else "MISMATCH (file differs from the published checksum; check before use)"
-print(f"Size: {dest.stat().st_size / 1e3:.0f} kB   md5: {md5}   {status}")

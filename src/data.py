@@ -13,6 +13,7 @@ _largest = rdMolStandardize.LargestFragmentChooser()
 
 """Parse SMILES: so RDKit reads text and build whole molecule object to later use as a row"""
 def load_raw(dcfg):
+    """Load the raw CSV file and rename columns to standard names."""
     df = pd.read_csv(dcfg["raw_file"])
     df = df.rename(columns={dcfg["smiles_col"]: "smiles_raw", dcfg["target_col"]: "logd"})
     return df[["smiles_raw", "logd"]]
@@ -38,9 +39,10 @@ def merge_duplicates(df):
     out = out.reset_index().rename(columns={"flat_key": "mol_id"})
     return out
 
-"""Scafford: strip each molecule to its core ring, to identify core family. 
-   It's the group label for the scaffold split, so whole families go to either train or test."""
+
 def add_scaffold(df):
+    """Scafford: strip each molecule to its core ring, to identify core family. 
+   It's the group label for the scaffold split, so whole families go to either train or test."""
     df = df.copy()
     df["scaffold"] = df.smiles.map(lambda s: MurckoScaffold.MurckoScaffoldSmiles(mol=Chem.MolFromSmiles(s))) #molecule parse with Chem.MolFromSmiles(s) then passes as mol
     return df

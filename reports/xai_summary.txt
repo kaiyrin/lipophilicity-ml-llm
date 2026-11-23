@@ -1,0 +1,9 @@
+Using 1231 columns and 5 scaffold folds, the HGB_both model was evaluated by measuring the increase in RMSE when one column is shuffled on test molecules only. Across 5 repeats per column with seed 0, five hypotheses were tested to examine column importance. 
+
+H1: supported, with top-1 42%, top-2 73%, top-10 80%; top column d_MolLogP 0.452 (fold SD not saved).
+H2: not supported, with 50% of 1231 columns are <= 0; 75 are above 0.001.
+H3: supported, with 9 of the top-10 are descriptors, 1 are fingerprint bits.
+H4: supported, with d_MolLogP: 1 near-copies, 0.452 alone -> 0.443 collapsed; d_fr_COO: 2 near-copies, 0.322 alone -> 0.324 collapsed.
+H5: supported, with before ['d_MolLogP', 'd_fr_COO'], after ['d_MolLogP', 'd_fr_COO'].
+
+Limits include that importance shows what the model uses, not what causes the target, and that verdict rules such as 50% or 6 of 10 were fixed by the author in advance and are not statistical tests.
