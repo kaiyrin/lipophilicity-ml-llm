@@ -1,10 +1,3 @@
----
-review: inbox
-type:
-tags:
----
-
-
 # Predicting lipophilicity (logD) from molecular structure
 
 This primarily a machine-learning project on a chemistry dataset. A model reads a molecule's structure and predicts how lipophilic it is (its **logD**), is tested on **new chemical families** it has never seen, says **"I don't know"** when a molecule looks too unlike its training data, and has a **light explainability (XAI) summary** (`permutation_importance`, `PartialDependenceDisplay`) that an LLM puts into plain English.
